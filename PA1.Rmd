@@ -1,0 +1,61 @@
+---
+title: "Reproducible Research: Peer Assessment 1"
+output: 
+  html_document:
+    keep_md: true
+author: "GenDoc94"
+date: "2024-08-04"
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(dplyr)
+library(ggplot2)
+opts_chunk$set(echo = TRUE)
+```
+
+## Loading and preprocessing the data
+1. Load the data
+```{r reading_data, results='hide'}
+linkURL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+download.file(linkURL, destfile = "activity.zip")
+unzip(zipfile = "activity.zip")
+activity <- read.csv("activity.csv", header = TRUE, sep = ",")
+file.remove("activity.zip")
+```
+
+2. Transform the data
+```{r transforming_data, results='hide'}
+activity$date <- as.Date(activity$date, "%Y-%m-%d")
+```
+
+3. See the head of the data
+```{r head_data}
+head(activity)
+str(activity)
+```
+
+## What is mean total number of steps taken per day?
+1. Calculating the steps by day
+```{r calculate_steps}
+day_steps <- aggregate(steps ~ date, activity, FUN = sum)
+```
+
+2. Histogram of number of steps
+```{r steps_histogram}
+g <-- ggplot(day_steps, aes (x=steps))
+g + geom_histogram() +
+        labs(title = "Histogram of Steps by day",
+             x = "Steps",
+             y = "Freq")
+```
+
+## What is the average daily activity pattern?
+
+
+
+## Imputing missing values
+
+
+
+## Are there differences in activity patterns between weekdays and weekends?
