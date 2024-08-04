@@ -15,7 +15,8 @@ opts_chunk$set(echo = TRUE)
 ```
 
 ## Loading and preprocessing the data
-1. Load the data
+
+1.  Load the data
 ```{r reading_data, results='hide'}
 linkURL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 download.file(linkURL, destfile = "activity.zip")
@@ -24,38 +25,74 @@ activity <- read.csv("activity.csv", header = TRUE, sep = ",")
 file.remove("activity.zip")
 ```
 
-2. Transform the data
+2.  Transform the data
 ```{r transforming_data, results='hide'}
 activity$date <- as.Date(activity$date, "%Y-%m-%d")
 ```
 
-3. See the head of the data
+3.  See the head of the data
 ```{r head_data}
 head(activity)
 str(activity)
 ```
 
 ## What is mean total number of steps taken per day?
-1. Calculating the steps by day
+
+1.  Calculating the steps by day
 ```{r calculate_steps}
 day_steps <- aggregate(steps ~ date, activity, FUN = sum)
 ```
 
-2. Histogram of number of steps
+2.  Histogram of number of steps
 ```{r steps_histogram}
-g <-- ggplot(day_steps, aes (x=steps))
-g + geom_histogram() +
-        labs(title = "Histogram of Steps by day",
-             x = "Steps",
-             y = "Freq")
+g <- ggplot(day_steps, aes(x=steps))
+g + 
+        geom_histogram(fill = "darkblue", binwidth = 600) +
+        labs(title = "Histogram of Steps by day", x = "Steps", y = "Freq") +
+        theme_bw()
 ```
+
+3.  Calculate the mean and median of total steps per day
+```{r calculate_mnmd, results='hold'}
+step_mean <- mean(day_steps$steps, na.rm = TRUE)
+step_median <- median(day_steps$steps, na.rm = TRUE)
+```
+The mean is `r step_mean` and the median is `r step_median`.
 
 ## What is the average daily activity pattern?
 
+1.  Calculating interval
+```{r interval}
+intervaldb <- group_by(activity, interval) %>% 
+                summarise(steps=mean(steps, na.rm = TRUE)) %>%
+                unique()
+```
 
+2.  Plotting the interval
+```{r plot_interval}
+g <- ggplot(intervaldb, aes(x=interval, y=steps))
+g + 
+        geom_line(color = "darkblue", linewidth = 0.5) +
+        labs(title = "Average of daily steps", x = "Interval", y = "Average steps/day") +
+        theme_bw()
+```
+
+3.  5-minute interval with the maxium number of steps
+```{r max_interval}
+max_interval <- intervaldb[which.max(intervaldb$steps),1]
+```
+The maximum interval is `r max_interval`.
 
 ## Imputing missing values
 
+1.  Calculating total missing values in the dataset
+```{r total_missing}
+nas <- sum(is.na(activity$steps))
+```
+Total number of missing values: `r nas`.
+
+2. Imputing data on missing values. I used mean values of steps for filling the missing values. Firstly matched by interval across dates.
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
