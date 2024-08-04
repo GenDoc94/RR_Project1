@@ -11,6 +11,7 @@ date: "2024-08-04"
 library(knitr)
 library(dplyr)
 library(ggplot2)
+library(lattice)
 opts_chunk$set(echo = TRUE)
 ```
 
@@ -57,6 +58,7 @@ g +
 step_mean <- mean(day_steps$steps, na.rm = TRUE)
 step_median <- median(day_steps$steps, na.rm = TRUE)
 ```
+
 The mean is `r step_mean` and the median is `r step_median`.
 
 ## What is the average daily activity pattern?
@@ -89,10 +91,54 @@ The maximum interval is `r max_interval`.
 ```{r total_missing}
 nas <- sum(is.na(activity$steps))
 ```
+
 Total number of missing values: `r nas`.
 
-2. Imputing data on missing values. I used mean values of steps for filling the missing values. Firstly matched by interval across dates.
+2.  Imputing data on missing values. I used mean values of steps for filling the missing values. Firstly matched by interval across dates.
+```{r calculating_missing}
+impute_activity <- activity %>%
+        mutate(
+                steps = case_when(
+                        is.na(steps) ~ intervaldb$steps[match(activity$interval, intervaldb$interval)],
+                        TRUE ~ as.numeric(steps)
+                )
+        )
+```
 
+3.  Re-creating the histogram
+```{r histogram_impute}
+impute_day_steps <- aggregate(steps ~ date, impute_activity, FUN = sum)
+g <- ggplot(impute_day_steps, aes(x=steps))
+g + 
+        geom_histogram(fill = "darkblue", binwidth = 600) +
+        labs(title = "Histogram of Steps by day", x = "Steps", y = "Freq") +
+        theme_bw()
+```
+
+4.  Comparing impute vs. original
+```{r calculate_mnmd_impute}
+imp_step_mean <- mean(impute_day_steps$steps, na.rm = TRUE)
+imp_step_median <- median(impute_day_steps$steps, na.rm = TRUE)
+mean_dif <- imp_step_mean - step_mean
+median_dif <- imp_step_median - step_median
+```
+|          |        Mean     | Median            | Diff            |
+|----------|-----------------|-------------------|-----------------|
+| Original |`r step_mean`    |`r step_median`    |`r mean_dif`     |
+| Impute   |`r imp_step_mean`|`r imp_step_median`|`r median_dif`   |
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r week}
+impute_activity$weekF <- as.factor(ifelse(weekdays(as.Date(impute_activity$date))=="sábado"| weekdays(as.Date(impute_activity$date))=="domingo", "Weekends", "Weekdays"))
+aggregate_impute_activity <- aggregate(steps~interval + weekF, impute_activity, mean)
+xyplot(steps~interval|weekF,
+       data=aggregate_impute_activity,
+       main="Interval Averages: Weekdays vs Weekends",
+       xlab="Interval",
+       layout=c(1,2),
+       type="l",
+       color = "darkblue")
+
+```
+
 
